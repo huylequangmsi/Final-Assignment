@@ -1,0 +1,157 @@
+---
+title: "Shiny App"
+author: "Huy Le Quang"
+date: "7/31/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+## 1. Load necessary packages
+
+```{r}
+
+library(shiny)
+library(shinydashboard)
+
+```
+
+
+## 2. User interface
+
+```{r}
+
+country.name <- setNames(data_final$country, data_final$country) # country names
+
+header <- dashboardHeader(title = "European Value Study 2017 (EVS 2017)")
+
+sidebar <- dashboardSidebar(
+        sidebarMenu(
+            menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
+            menuItem("Exploration", tabName = "exploration", icon = icon("bar-chart-o")),
+            menuItem("Regression", tabName = "regression", icon = icon("th")),
+            menuItem("Country",
+                     selectInput("country", "Select country for your analysis",
+                                 choices = country.name, multiple = FALSE, selectize = TRUE,
+                                 width = '98%')),
+            menuItem("Outcome",
+                     selectInput("outcome", "Select outcome you want to see",
+                                 choices = c("working_mom",
+                                             "immigrant_job"),
+                                 multiple = FALSE, selectize = TRUE, width = '98%')),
+            menuItem("Control",
+                     selectInput("control", "Select control variables for regression",
+                                 choices = c("male", "education_fct"),
+                                 multiple = TRUE, selectize = TRUE, width = '98%')),
+            menuItem("Age polynomial",
+                     sliderInput("age", "Select age polynomial for regression",
+                                 min = 1, max = 5, value = 1, width = '95%'))
+        ))
+
+body <- dashboardBody(
+        tabItems(
+            # First tab content
+        tabItem(tabName = "overview",
+                h2("This application helps you analyze the Attitudes towards working mothers and jobs for
+                immigrants. 
+                
+                The analysis is based on the European Value Study 2017 (EVS 2017). 
+                
+                Please select countries, and different inputs to see the outcomes in the next tabs")
+                ),
+        
+            # Second tab content
+        tabItem(tabName = "exploration",
+                fluidPage(
+                    box(title = "Influence of age", solidHeader = TRUE,
+                            plotOutput("plot1"), width = 450),
+                    box(title = "Influence of gender", solidHeader = TRUE,
+                        plotOutput("plot2")),
+                    box(title = "Influence of education", solidHeader = TRUE,
+                        plotOutput("plot3"))
+                )
+            
+        ),
+        
+            # Third tab content
+        tabItem(tabName = "regression",
+                h2("cde")
+                )
+        
+        )
+    )
+
+
+ui <- dashboardPage(
+    header,
+    sidebar,
+    body
+)
+
+```
+
+
+
+## 3. Server
+
+```{r}
+
+server <- function(input, output){
+    country <- reactive({
+        get(input$country, country.name)
+    })
+    outcome <- reactive({
+        get(input$outcome, outcome)
+    })
+    output$plot1 <- renderPlot({
+        explore_data %>% 
+    filter(country == input$country) %>% 
+    ggplot(aes(x = age))+
+            aes_string(y = input$outcome)+
+    stat_summary(fun.y = mean,
+                 geom = "line",
+                 color = "red")+
+    ylim(1,5)+
+    theme_bw()+
+    labs(x = "Age",
+         y = "Attitude",
+         caption = "Data: EVS 2017")
+    })
+    output$plot2 <- renderPlot({
+        explore_data %>% 
+    filter(country == input$country) %>% 
+    ggplot(aes(x = as.factor(male), color = male))+ 
+            aes_string(y = input$outcome)+
+    stat_summary(fun.y = mean,
+                geom = "point")+
+    ylim(1,5)+
+    theme_bw()+
+    labs(x = "Gender",
+         y = "Attitude",
+         caption = "Data: EVS 2017",
+         color = "Gender")
+    })
+    output$plot3 <- renderPlot({
+        explore_data %>% 
+            filter(country == input$country) %>% 
+    ggplot(aes(x = education_fct,
+               color = education_fct))+
+            aes_string(y = input$outcome)+
+    stat_summary(fun.y = mean,
+                 geom = "point")+
+    ylim(1,5)+
+    theme_bw()+
+    labs(x = "Education level",
+         y = "Attitude",
+         caption = "Data: EVS 2017",
+         color = "Education level")
+    })
+    
+}
+
+
+shinyApp(ui, server)
+```
+
