@@ -15,6 +15,7 @@ knitr::opts_chunk$set(warning = FALSE)
 
 library(shiny)
 library(shinydashboard)
+library(stargazer)
 
 ```
 
@@ -24,6 +25,7 @@ library(shinydashboard)
 ```{r}
 
 country.name <- setNames(data_final$country, data_final$country) # country names
+
 
 header <- dashboardHeader(title = "European Value Study 2017 (EVS 2017)")
 
@@ -35,7 +37,7 @@ sidebar <- dashboardSidebar(
             menuItem("Country",
                      selectInput("country", "Select country for your analysis",
                                  choices = country.name, multiple = FALSE, selectize = TRUE,
-                                 width = '98%')),
+                                 selected = "Germany", width = '98%')),
             menuItem("Outcome",
                      selectInput("outcome", "Select outcome you want to see",
                                  choices = c("working_mom",
@@ -44,9 +46,10 @@ sidebar <- dashboardSidebar(
             menuItem("Control",
                      selectInput("control", "Select control variables for regression",
                                  choices = c("male", "education_fct"),
-                                 multiple = TRUE, selectize = TRUE, width = '98%')),
+                                 multiple = TRUE, selectize = TRUE, 
+                                 selected = "male", width = '98%')),
             menuItem("Age polynomial",
-                     sliderInput("age", "Select age polynomial for regression",
+                     sliderInput("age_poly", "Select age polynomial for regression",
                                  min = 1, max = 5, value = 1, width = '95%'))
         ))
 
@@ -77,11 +80,12 @@ body <- dashboardBody(
         
             # Third tab content
         tabItem(tabName = "regression",
-                h2("cde")
-                )
+              box(title = "Regression table", uiOutput("lm1"), width = 450),
+              box(title = "Residuals vs. Fitted", solidHeader = TRUE,
+                  plotOutput("plot4"), width = 450)
         
         )
-    )
+    ))
 
 
 ui <- dashboardPage(
@@ -105,6 +109,18 @@ server <- function(input, output){
     outcome <- reactive({
         get(input$outcome, outcome)
     })
+    control <- reactive({
+        get(input$control, control)
+    })
+    age_poly <- reactive({
+        get(input$age_poly, age_poly)
+    })
+    lm1 <- reactive({
+        lm(as.formula(paste(input$outcome, paste(input$control, collapse="+"), sep = " ~ ")),
+           data = explore_data %>% 
+               filter(country == input$country))
+    })
+    
     output$plot1 <- renderPlot({
         explore_data %>% 
     filter(country == input$country) %>% 
@@ -148,7 +164,12 @@ server <- function(input, output){
          caption = "Data: EVS 2017",
          color = "Education level")
     })
-    
+    output$lm1 <- renderUI({
+        HTML(stargazer(lm1(), type="html"))
+    })
+    output$plot4 <- renderPlot({
+        plot(lm1(), 1)
+    })
 }
 
 
