@@ -1,0 +1,91 @@
+---
+title: "Dynamic report"
+author: "Huy Le Quang"
+date: "8/4/2020"
+output: html_document
+params: 
+    country: Germany
+    outcome: working_mom
+    control: male
+    
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(warning = FALSE)
+
+```
+
+## R Markdown
+
+This is the report based on the inputs you have chosen in the ShinyApp to understand the attitude towards working mother and jobs for immigrants. The analysis is based on European Value Study 2017 (EVS 2017).
+
+
+
+```{r, echo=FALSE}
+
+# Influence of Age
+
+explore_data %>% 
+    filter(country == params$country) %>% 
+    ggplot(aes(x = age))+
+        aes(y = as.numeric(params$outcome))+
+    stat_summary(fun.y = mean,
+                 geom = "line",
+                 color = "red")+
+    ylim(1,5)+
+    theme_bw()+
+    labs(x = "Age",
+         y = "Attitude",
+         caption = "Data: EVS 2017")
+
+# Influence of gender
+
+explore_data %>% 
+    filter(country == params$country) %>% 
+    ggplot(aes(x = as.factor(male), 
+               y = as.numeric(params$outcome),
+               color = male))+
+    stat_summary(fun.y = mean,
+                geom = "point")+
+    ylim(1,4)+
+    theme_bw()+
+    labs(x = "Gender",
+         y = "Attitude",
+         caption = "Data: EVS 2017",
+         color = "Gender")
+
+# Influence of education
+
+explore_data %>% 
+    filter(country == params$country) %>% 
+    ggplot(aes(x = as.factor(education_fct),
+               y = as.numeric(params$outcome),
+               color = education_fct))+
+    stat_summary(fun.y = mean,
+                 geom = "point")+
+    ylim(1,4)+
+    theme_bw()+
+    labs(x = "Education level",
+         y = "Attitude",
+         caption = "Data: EVS 2017",
+         color = "Education level")
+```
+
+## Regression model
+
+
+
+```{r, echo=FALSE}
+
+lm1 <- lm(data = explore_data %>% 
+              filter(country == params$country),
+          formula = params$outcome ~ params$control)
+
+stargazer::stargazer(lm1, type = "html")
+
+plot(lm1, 1)
+
+
+```
+
