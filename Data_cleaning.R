@@ -2,6 +2,8 @@
 
 library(tidyverse)
 library(foreign)
+library(stargazer)
+
 
 
 ## Load data
@@ -64,8 +66,9 @@ explore_data <- data_final %>%
 # Working mom and age
 
 explore_data %>% 
-    ggplot(aes(x = age,
-               y = working_mom))+
+    filter(country == "Germany") %>% 
+    ggplot(aes(x = age))+
+        aes(y = as.numeric(working_mom))+
     stat_summary(fun.y = mean,
                  geom = "line",
                  color = "red")+
@@ -153,4 +156,19 @@ explore_data %>%
          color = "Education level")
 
 
+
+# Regression
+
+
+model2 <- lm(data = explore_data %>% 
+                 filter(country == "Germany"), 
+             formula = working_mom ~ male + education_fct + poly(age, 2))
+
+plot(model2,1)
+
+stargazer::stargazer(lm(data = explore_data %>% 
+                            filter(country == "Germany"), 
+                        formula = working_mom ~ male + education_fct + poly(age, 2)))
+
+stargazer(model2)
 
