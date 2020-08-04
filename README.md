@@ -4,7 +4,7 @@ Modern Workflow in Data Science - Final Assignment
 
 ## 1. Introduction
 
-This repository is created for the Final Assignment of the Modern Workflow in Data Science. The project aims at investigating people's attitude towards working mothers and jobs for immigrants. The dataset used in this project is the European Value Study 2017 (EVS 2017). The dataset can be obtained from [this website](https://search.gesis.org/research_data/ZA7500).
+This repository is created for the Final Assignment of the Modern Workflow in Data Science. The project aims at creating a ShinyApp to investigate people's attitude towards working mothers and jobs for immigrants. The dataset used in this project is the European Value Study 2017 (EVS 2017). The dataset can be obtained from [this website](https://search.gesis.org/research_data/ZA7500).
 
 The repository consists of four Rmarkdown files:
 
