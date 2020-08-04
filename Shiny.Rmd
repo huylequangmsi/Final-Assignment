@@ -16,6 +16,7 @@ knitr::opts_chunk$set(warning = FALSE)
 library(shiny)
 library(shinydashboard)
 library(stargazer)
+library(rmarkdown)
 
 ```
 
@@ -50,7 +51,9 @@ sidebar <- dashboardSidebar(
                                  selected = "male", width = '98%')),
             menuItem("Age polynomial",
                      sliderInput("age_poly", "Select age polynomial for regression",
-                                 min = 1, max = 5, value = 1, width = '95%'))
+                                 min = 1, max = 5, value = 1, width = '95%')),
+            menuItem("Generate report",
+                     downloadButton("report", "Generate report"), badgeColor = "green")
         ))
 
 body <- dashboardBody(
@@ -103,24 +106,34 @@ ui <- dashboardPage(
 ```{r}
 
 server <- function(input, output){
+    # Select country
     country <- reactive({
         get(input$country, country.name)
     })
+    
+    # Select outcome
     outcome <- reactive({
         get(input$outcome, outcome)
     })
+    
+    # Select controls
     control <- reactive({
         get(input$control, control)
     })
+    
+    # Select age polynomials
     age_poly <- reactive({
         get(input$age_poly, age_poly)
     })
+    
+    # Regression model 
     lm1 <- reactive({
         lm(as.formula(paste(input$outcome, paste(input$control, collapse="+"), sep = " ~ ")),
            data = explore_data %>% 
                filter(country == input$country))
     })
     
+    # Plot 1
     output$plot1 <- renderPlot({
         explore_data %>% 
     filter(country == input$country) %>% 
@@ -135,6 +148,8 @@ server <- function(input, output){
          y = "Attitude",
          caption = "Data: EVS 2017")
     })
+    
+    # Plot 2
     output$plot2 <- renderPlot({
         explore_data %>% 
     filter(country == input$country) %>% 
@@ -149,6 +164,8 @@ server <- function(input, output){
          caption = "Data: EVS 2017",
          color = "Gender")
     })
+    
+    # Plot 3
     output$plot3 <- renderPlot({
         explore_data %>% 
             filter(country == input$country) %>% 
@@ -164,12 +181,33 @@ server <- function(input, output){
          caption = "Data: EVS 2017",
          color = "Education level")
     })
+    
+    # Regression table
     output$lm1 <- renderUI({
         HTML(stargazer(lm1(), type="html"))
     })
+    
+    # Plot 4
     output$plot4 <- renderPlot({
         plot(lm1(), 1)
     })
+    
+    # Generate report
+    output$report <- downloadHandler(
+        filename = "report.html",
+        content = function(file){
+            tempReport <- file.path(tempdir(), "report.Rmd")
+            file.copy("report.Rmd", tempReport, overwrite = TRUE)
+            params <- list(country = input$country,
+                           outcome = input$outcome,
+                           control = input$control,
+                           age_poly = input$age_poly)
+            rmarkdown::render(tempReport, output_file = file,
+            params = params,
+            envir = new.env(parent = globalenv())
+            )
+        }
+            )
 }
 
 
