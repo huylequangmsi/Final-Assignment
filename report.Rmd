@@ -7,7 +7,7 @@ params:
     country: Germany
     outcome: working_mom
     control: male
-    
+    age_poly: age_poly
 ---
 
 ```{r setup, include=FALSE}
